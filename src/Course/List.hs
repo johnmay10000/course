@@ -128,7 +128,14 @@ map' f = foldRight (\a acc -> (f a):.acc) Nil
 --
 -- prop> filter (const False) x == Nil
 filter :: (a -> Bool) -> List a -> List a
-filter = 
+filter f list = foldRight (\e acc -> if (f e) 
+                                     then (e:.acc) 
+                                     else acc) Nil list
+
+filter' :: (a -> Bool) -> List a -> List a
+filter' f list = foldLeft (\acc e -> if (f e) 
+                                     then (e:.acc) 
+                                     else acc) Nil list
 
 -- | Append two lists to a new list.
 --
