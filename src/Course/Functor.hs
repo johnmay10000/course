@@ -9,10 +9,7 @@ import Course.List
 import qualified Prelude as P
 
 class Functor f where
-  (<$>) ::
-    (a -> b)
-    -> f a
-    -> f b
+  (<$>) :: (a -> b) -> f a -> f b
 
 infixl 4 <$>
 
@@ -25,10 +22,12 @@ infixl 4 <$>
 --
 -- >>> (+1) <$> Id 2
 -- Id 3
-instance Functor Id where
-  (<$>) =
-    error "todo"
+-- (a -> b) -> Id a -> Id b
 
+instance Functor Id where
+  f <$> Id a = 
+	  Id (f a)
+	  
 -- | Maps a function on the List functor.
 --
 -- >>> (+1) <$> Nil
@@ -37,8 +36,8 @@ instance Functor Id where
 -- >>> (+1) <$> (1 :. 2 :. 3 :. Nil)
 -- [2,3,4]
 instance Functor List where
-  (<$>) =
-    error "todo"
+  f <$> Nil = Nil
+  f <$> (h:.t) = (f h) :. map f t 
 
 -- | Maps a function on the Optional functor.
 --
@@ -48,16 +47,23 @@ instance Functor List where
 -- >>> (+1) <$> Full 2
 -- Full 3
 instance Functor Optional where
-  (<$>) =
-    error "todo"
+  f <$> Empty = Empty
+  f <$> Full a = Full (f a)
 
 -- | Maps a function on the reader ((->) t) functor.
 --
 -- >>> ((+1) <$> (*2)) 8
 -- 17
 instance Functor ((->) t) where
-  (<$>) =
-    error "todo"
+  -- (<$>) f g t = (.) f g t
+  (<$>) = (.)
+-- (a -> b) -> f a -> f b
+-- (a -> b) -> ((->) t) a -> ((->) t) b
+-- (a -> b) -> (t -> a) -> (t -> b)
+-- (a -> b) -> (t -> a) -> t -> b
+-- f (g t)
+-- f.g t
+-- (.) f g t
 
 -- | Anonymous map. Maps a constant value on a functor.
 --
@@ -67,13 +73,8 @@ instance Functor ((->) t) where
 -- prop> x <$ [a,b,c] == [x,x,x]
 --
 -- prop> x <$ Full q == Full x
-(<$) ::
-  Functor f =>
-  a
-  -> f b
-  -> f a
-(<$) =
-  error "todo"
+(<$) :: Functor f => a -> f b -> f a
+(<$) a fb = (const a) <$> fb 
 
 -----------------------
 -- SUPPORT LIBRARIES --

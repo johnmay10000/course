@@ -15,8 +15,7 @@ import Course.Optional
 import qualified Prelude as P
 
 class Apply f => Applicative f where
-  pure ::
-    a -> f a
+  pure :: a -> f a
 
 -- | Witness that all things with (<*>) and pure also have (<$>).
 --
@@ -28,41 +27,34 @@ class Apply f => Applicative f where
 --
 -- >>> (+1) <$> (1 :. 2 :. 3 :. Nil)
 -- [2,3,4]
-(<$>) ::
-  Applicative f =>
-  (a -> b)
-  -> f a
-  -> f b
-(<$>) =
-  error "todo"
-
+(<$>) :: Applicative f => (a -> b) -> f a -> f b
+-- (<$>) f fa = (pure f) <*> fa 
+(<$>) = (<*>).pure
 -- | Insert into the Id monad.
 --
 -- prop> pure x == Id x
 instance Applicative Id where
-  pure =
-    error "todo"
+	--  a -> Id a
+  pure = Id
 
 -- | Insert into a List.
 --
 -- prop> pure x == x :. Nil
 instance Applicative List where
-  pure =
-    error "todo"
+  pure a = a:.Nil  
 
 -- | Insert into an Optional.
 --
 -- prop> pure x == Full x
 instance Applicative Optional where
-  pure =
-    error "todo"
+  pure a = Full a
 
 -- | Insert into a constant function.
 --
 -- prop> pure x y == x
 instance Applicative ((->) t) where
-  pure =
-    error "todo"
+ --  a -> t -> a
+  pure = const
 
 -- | Sequences a list of structures to a structure of list.
 --
@@ -80,12 +72,22 @@ instance Applicative ((->) t) where
 --
 -- >>> sequence ((*10) :. (+2) :. Nil) 6
 -- [60,8]
-sequence ::
-  Applicative f =>
-  List (f a)
-  -> f (List a)
-sequence =
-  error "todo"
+sequence :: Applicative f => List (f a) -> f (List a)
+sequence = foldRight (\fa facc -> lift2 (:.) fa facc) (pure Nil)
+-- Inside f world
+-- 	a :. acc :. aacc
+-- 	
+-- Ouside f world
+--     f aacc
+-- 
+-- acc = pure (a1:.Nil)	
+-- acc = pure (a2:.a1:.Nil)
+
+--  el :: f a
+--  acc :: f (List a)
+--  result :: f (List a)
+
+
 
 -- | Replicate an effect a given number of times.
 --
@@ -100,13 +102,8 @@ sequence =
 --
 -- >>> replicateA 4 (*2) 5
 -- [10,10,10,10]
-replicateA ::
-  Applicative f =>
-  Int
-  -> f a
-  -> f (List a)
-replicateA =
-  error "todo"
+replicateA :: Applicative f => Int -> f a -> f (List a)
+replicateA num func = sequence (replicate num func)  
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -124,14 +121,12 @@ replicateA =
 --
 -- >>> filtering (>) (4 :. 5 :. 6 :. 7 :. 8 :. 9 :. 10 :. 11 :. 12 :. Nil) 8
 -- [9,10,11,12]
-filtering ::
-  Applicative f =>
-  (a -> f Bool)
-  -> List a
-  -> f (List a)
-filtering =
-  error "todo"
-
+filtering :: Applicative f => (a -> f Bool) -> List a -> f (List a)
+filtering _ Nil = pure Nil
+filtering y (h:.t) = lift2 (\a b -> if a then h:.b else b) (y h) (filtering y t)
+--       												   f bool f (List a)
+-- 															a          b
+-- (a -> b -> c) -> f a -> f b -> f c
 -----------------------
 -- SUPPORT LIBRARIES --
 -----------------------

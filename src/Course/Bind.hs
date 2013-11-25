@@ -15,11 +15,7 @@ import Course.List
 import Course.Optional
 import qualified Prelude as P
 
-class Apply f => Bind f where
-  (=<<) ::
-    (a -> f b)
-    -> f a
-    -> f b
+class Apply f => Bind f where (=<<) :: (a -> f b) -> f a -> f b
 
 infixr 1 =<<
 
@@ -54,14 +50,10 @@ infixr 1 =<<
 --
 -- >>> ((*) <*> (+2)) 3
 -- 15
-(<*>) ::
-  Bind f =>
-  f (a -> b)
-  -> f a
-  -> f b
-(<*>) =
-  error "todo"
-
+(<*>) :: Bind f => f (a -> b) -> f a -> f b
+(<*>) = error "TODO"
+-- (<*>) fg fa = (\g -> ) <$> fa
+-- fmap  (a -> b) -> f a -> f b
 infixl 4 <*>
 
 -- | Binds a function on the Id monad.
@@ -69,33 +61,35 @@ infixl 4 <*>
 -- >>> (\x -> Id(x+1)) =<< Id 2
 -- Id 3
 instance Bind Id where
-  (=<<) =
-    error "todo"
+	--  (a -> Id b) -> Id a -> Id b
+  (=<<) f (Id a) = f a   
 
 -- | Binds a function on a List.
 --
 -- >>> (\n -> n :. n :. Nil) =<< (1 :. 2 :. 3 :. Nil)
 -- [1,1,2,2,3,3]
 instance Bind List where
-  (=<<) =
-    error "todo"
+	-- (a -> List b) -> List a -> List b
+  (=<<) = flatMap
 
 -- | Binds a function on an Optional.
 --
 -- >>> (\n -> Full (n + n)) =<< Full 7
 -- Full 14
 instance Bind Optional where
-  (=<<) =
-    error "todo"
+	-- (a -> Optional b) -> Optional a -> Optional b
+  (=<<) f (Full a) = f a
 
 -- | Binds a function on the reader ((->) t).
 --
 -- >>> ((*) =<< (+10)) 7
 -- 119
 instance Bind ((->) t) where
-  (=<<) =
-    error "todo"
-
+	-- (a -> ((->) t) b) -> ((->) t) a -> ((->) t) b
+	--  (a -> (t -> b)) -> (t -> a) -> (t -> b)
+	--  (a -> t -> b) -> (t-> a) -> t -> b	
+  (=<<) f g t = f (g t) t
+  
 -- | Flattens a combined structure to a single structure.
 --
 -- >>> join ((1 :. 2 :. 3 :. Nil) :. (1 :. 2 :. Nil) :. Nil)
@@ -109,32 +103,22 @@ instance Bind ((->) t) where
 --
 -- >>> join (+) 7
 -- 14
-join ::
-  Bind f =>
-  f (f a)
-  -> f a
-join =
-  error "todo"
+join :: Bind f => f (f a) -> f a
+join =  (=<<) id
 
 -- | Implement a flipped version of @(=<<)@, however, use only
 -- @join@ and @(<$>)@.
-(>>=) ::
-  Bind f =>
-  f a
-  -> (a -> f b)
-  -> f b
-(>>=) =
-  error "todo"
+(>>=) :: Bind f => f a -> (a -> f b) -> f b
+(>>=) = error "TODO"
+-- (a -> b) -> f a -> f b
+-- f (f a) -> f a
+-- fa >>= f =  
+-- error "todo"
 
 infixl 1 >>=
 
 -- | Implement composition within the @Bind@ environment.
-(<=<) ::
-  Bind f =>
-  (b -> f c)
-  -> (a -> f b)
-  -> a
-  -> f c
+(<=<) :: Bind f => (b -> f c) -> (a -> f b) -> a  -> f c
 (<=<) =
   error "todo"
 

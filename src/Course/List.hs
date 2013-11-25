@@ -70,9 +70,9 @@ headOr ::
   a
   -> List a
   -> a
-headOr =
-  error "todo"
-
+headOr a Nil = a
+headOr a ( x :. _) = x
+	
 -- | The product of the elements of a list.
 --
 -- >>> product (1 :. 2 :. 3 :. Nil)
@@ -83,9 +83,10 @@ headOr =
 product ::
   List Int
   -> Int
-product =
-  error "todo"
-
+-- product Nil = 1 
+-- product (x :. y) =  x * (product y) 
+product = foldLeft (*) 1
+	
 -- | Sum the elements of the list.
 --
 -- >>> sum (1 :. 2 :. 3 :. Nil)
@@ -98,9 +99,9 @@ product =
 sum ::
   List Int
   -> Int
-sum =
-  error "todo"
-
+-- sum Nil = 0 
+-- sum ( x :. y) = x + (sum y)	  
+sum = foldLeft (+) 0
 -- | Return the length of the list.
 --
 -- >>> length (1 :. 2 :. 3 :. Nil)
@@ -110,8 +111,9 @@ sum =
 length ::
   List a
   -> Int
-length =
-  error "todo"
+-- length Nil = 0
+-- length (x :. y) = 1 + (length y)
+length = foldLeft (\b _ -> b + 1) 0 
 
 -- | Map the given function on each element of the list.
 --
@@ -121,13 +123,11 @@ length =
 -- prop> headOr x (map (+1) infinity) == 1
 --
 -- prop> map id x == x
-map ::
-  (a -> b)
-  -> List a
-  -> List b
-map =
-  error "todo"
-
+map :: (a -> b) -> List a -> List b
+map _ Nil = Nil
+map f (h :. t) = (f h) :. map f t
+map' f (h :. t) = foldRight (\a b -> f a :. b ) Nil (h :. t)
+map'' f = foldRight (\a b -> f a :. b ) Nil
 -- | Return elements satisfying the given predicate.
 --
 -- >>> filter even (1 :. 2 :. 3 :. 4 :. 5 :. Nil)
@@ -142,8 +142,19 @@ filter ::
   (a -> Bool)
   -> List a
   -> List a
-filter =
-  error "todo"
+filter _ Nil = Nil 
+filter f (x :. y) = 
+	if f x 
+	 then 
+	 	x:.filter f y
+	 else 
+		filter f y	
+
+-- filterx ::
+--   (a -> Bool)
+--   -> List a
+--   -> List a
+filter' f (x :. y) = foldRight (\x acc -> if f x then (x :. acc) else acc) Nil (x :. y)
 
 -- | Append two lists to a new list.
 --
@@ -161,8 +172,10 @@ filter =
   List a
   -> List a
   -> List a
-(++) =
-  error "todo"
+Nil ++ Nil = Nil
+a ++ Nil = a
+Nil ++ b  =  b
+(h:.t) ++ b = h :. (t ++ b) 
 
 infixr 5 ++
 
@@ -179,8 +192,8 @@ infixr 5 ++
 flatten ::
   List (List a)
   -> List a
-flatten =
-  error "todo"
+flatten Nil = Nil
+flatten (h:.t) = h ++ flatten t  
 
 -- | Map a function then flatten to a list.
 --
@@ -196,8 +209,8 @@ flatMap ::
   (a -> List b)
   -> List a
   -> List b
-flatMap =
-  error "todo"
+flatMap f Nil = Nil
+flatMap f x = flatten (map f x) 
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -221,12 +234,19 @@ flatMap =
 --
 -- >>> seqOptional (Empty :. map Full infinity)
 -- Empty
-seqOptional ::
-  List (Optional a)
-  -> Optional (List a)
-seqOptional =
-  error "todo"
+seqOptional :: List (Optional a) -> Optional (List a)
+seqOptional Nil = Full(Nil)
+seqOptional (h:.t) = case h of
+						Empty -> Empty
+						Full a -> case seqOptional t of
+									Empty -> Empty
+									Full q -> Full (a:.q) 
 
+seqOptional' Nil = Full(Nil)
+seqOptional' (h:.t) = 
+	bindOptional (\a -> mapOptional(\q -> a:.q) (seqOptional' t)) h 
+-- 	
+-- seqOptional'' = foldRight(\h t -> )
 -- | Find the first element in the list matching the predicate.
 --
 -- >>> find even (1 :. 3 :. 5 :. Nil)
@@ -247,9 +267,12 @@ find ::
   (a -> Bool)
   -> List a
   -> Optional a
-find =
-  error "todo"
-
+find f Nil = Empty
+find f (h:.t) = if f h
+				then Full h
+				else find f t 
+				
+-- Find using filter
 -- | Reverse a list.
 --
 -- >>> reverse Nil
@@ -261,9 +284,10 @@ find =
 reverse ::
   List a
   -> List a
-reverse =
-  error "todo"
-
+reverse Nil = Nil
+reverse (h:.t) = reverse t ++ h:.Nil
+reverse' = foldRight (\h t -> t ++ h:.Nil) Nil
+reverse'' = foldLeft (\acc x -> x :. acc) Nil 
 -- | Do anything other than reverse a list.
 --
 -- >>> notReverse Nil
@@ -272,11 +296,12 @@ reverse =
 -- prop> let types = x :: List Int in notReverse x ++ notReverse y == notReverse (y ++ x)
 --
 -- prop> let types = x :: Int in notReverse (x :. Nil) == x :. Nil
-notReverse ::
-  List a
-  -> List a
-notReverse =
-  error "todo"
+-- notReverse ::
+--   List a
+--    -> List a
+-- notReverse Nil = Nil
+-- notReverse (h:.t) 
+-- 	error t
 
 hlist ::
   List a
