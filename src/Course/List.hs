@@ -128,9 +128,10 @@ map' f = foldRight (\a acc -> (f a):.acc) Nil
 --
 -- prop> filter (const False) x == Nil
 filter :: (a -> Bool) -> List a -> List a
-filter f list = foldRight (\e acc -> if (f e) 
-                                     then (e:.acc) 
-                                     else acc) Nil list
+filter _ Nil = Nil
+filter f (h:.t) = if f h
+                  then h:.filter f t 
+                  else filter f t
 
 filter' :: (a -> Bool) -> List a -> List a
 filter' f list = foldLeft (\acc e -> if (f e) 
@@ -149,13 +150,16 @@ filter' f list = foldLeft (\acc e -> if (f e)
 -- prop> (x ++ y) ++ z == x ++ (y ++ z)
 --
 -- prop> x ++ Nil == x
-(++) ::
-  List a
-  -> List a
-  -> List a
-(++) =
-  error "todo"
-
+(++) :: List a -> List a -> List a
+(++) Nil Nil = Nil
+(++) a Nil = a
+(++) Nil b = b
+(++)(h:.t) list = h:.(t++list)  
+--(+++) list1 list2 = foldLeft (\a acc -> h:.acc)  
+-- 1 :. (2 :. 3 :. Nil) ++ (4 :. 5 :. 6 :. Nil)
+-- 1 :. 2 :. (3 :. Nil) ++ (4 :. 5 :. 6 :. Nil)
+-- 1 :. 2 :. 3 :. (Nil) ++ (4 :. 5 :. 6 :. Nil)
+-- 1 :. 2 :. 3 :. (4 :. 5 :. 6 :. Nil)
 infixr 5 ++
 
 -- | Flatten a list of lists to a list.
@@ -168,11 +172,16 @@ infixr 5 ++
 -- prop> headOr x (flatten (y :. infinity :. Nil)) == headOr 0 y
 --
 -- prop> sum (map length x) == length (flatten x)
-flatten ::
-  List (List a)
-  -> List a
-flatten =
-  error "todo"
+flatten :: List (List a) -> List a
+flatten Nil = Nil
+flatten (h:.t) = h ++ flatten t 
+
+--((1 :. 2 :. 3 :. Nil) :. (4 :. 5 :. 6 :. Nil) :. (7 :. 8 :. 9 :. Nil) :. Nil)
+--((1 :. 2 :. 3 :. Nil) ++ flatten (4 :. 5 :. 6 :. Nil) :. (7 :. 8 :. 9 :. Nil) :. Nil)
+
+-- (1 :. 2 :. 3 :. 4 :. 5 :. 6 :. Nil) ++ flatten ((7 :. 8 :. 9 :. Nil) :. Nil)
+--((1 :. 2 :. 3 :. Nil) :. (4 :. 5 :. 6 :. Nil) :. (7 :. 8 :. 9 :. Nil) :. Nil)
+--((1 :. 2 :. 3 :. Nil) :. (4 :. 5 :. 6 :. Nil) :. (7 :. 8 :. 9 :. Nil) :. Nil)
 
 -- | Map a function then flatten to a list.
 --
@@ -184,12 +193,8 @@ flatten =
 -- prop> headOr x (flatMap id (y :. infinity :. Nil)) == headOr 0 y
 --
 -- prop> flatMap id (x :: List (List Int)) == flatten x
-flatMap ::
-  (a -> List b)
-  -> List a
-  -> List b
-flatMap =
-  error "todo"
+flatMap :: (a -> List b) -> List a -> List b
+flatMap f list = flatten (map f list) 
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -213,11 +218,8 @@ flatMap =
 --
 -- >>> seqOptional (Empty :. map Full infinity)
 -- Empty
-seqOptional ::
-  List (Optional a)
-  -> Optional (List a)
-seqOptional =
-  error "todo"
+seqOptional :: List (Optional a) -> Optional (List a)
+seqOptional = error "todo"
 
 -- | Find the first element in the list matching the predicate.
 --
