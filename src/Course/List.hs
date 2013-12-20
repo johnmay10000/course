@@ -219,7 +219,14 @@ flatMap f list = flatten (map f list)
 -- >>> seqOptional (Empty :. map Full infinity)
 -- Empty
 seqOptional :: List (Optional a) -> Optional (List a)
-seqOptional = error "todo"
+seqOptional Nil = Full (Nil)
+seqOptional (h:.t) = case h of 
+  Empty -> Empty
+  Full a -> case seqOptional t of
+                  Empty -> Empty
+                  Full q -> Full (a:.q)
+
+
 
 -- | Find the first element in the list matching the predicate.
 --
