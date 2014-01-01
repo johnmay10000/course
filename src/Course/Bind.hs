@@ -16,10 +16,7 @@ import Course.Optional
 import qualified Prelude as P
 
 class Apply f => Bind f where
-  (=<<) ::
-    (a -> f b)
-    -> f a
-    -> f b
+  (=<<) :: (a -> f b) -> f a -> f b
 
 infixr 1 =<<
 
@@ -54,13 +51,11 @@ infixr 1 =<<
 --
 -- >>> ((*) <*> (+2)) 3
 -- 15
-(<*>) ::
-  Bind f =>
-  f (a -> b)
-  -> f a
-  -> f b
-(<*>) =
-  error "todo"
+(<*>) :: Bind f => f (a -> b) -> f a -> f b
+(<*>) = error "todo"
+
+--(=<<) :: (a -> f b) -> f a -> f b
+--(<$>) :: (a -> b) -> f a -> f b
 
 infixl 4 <*>
 
@@ -69,32 +64,30 @@ infixl 4 <*>
 -- >>> (\x -> Id(x+1)) =<< Id 2
 -- Id 3
 instance Bind Id where
-  (=<<) =
-    error "todo"
+  (=<<) f (Id a) = f a
 
 -- | Binds a function on a List.
 --
 -- >>> (\n -> n :. n :. Nil) =<< (1 :. 2 :. 3 :. Nil)
 -- [1,1,2,2,3,3]
 instance Bind List where
-  (=<<) =
-    error "todo"
+  (=<<) f list = flatMap f list 
 
 -- | Binds a function on an Optional.
 --
 -- >>> (\n -> Full (n + n)) =<< Full 7
 -- Full 14
 instance Bind Optional where
-  (=<<) =
-    error "todo"
+  (=<<) _ Empty = Empty
+  (=<<) f (Full a) = f a 
 
 -- | Binds a function on the reader ((->) t).
 --
 -- >>> ((*) =<< (+10)) 7
 -- 119
 instance Bind ((->) t) where
-  (=<<) =
-    error "todo"
+  --(a -> t -> b) -> (t -> a) -> t -> b
+  (=<<) f g t = f (g t) t
 
 -- | Flattens a combined structure to a single structure.
 --
@@ -109,34 +102,21 @@ instance Bind ((->) t) where
 --
 -- >>> join (+) 7
 -- 14
-join ::
-  Bind f =>
-  f (f a)
-  -> f a
-join =
-  error "todo"
+join :: Bind f => f (f a) -> f a
+join ffa = id =<< ffa 
 
 -- | Implement a flipped version of @(=<<)@, however, use only
 -- @join@ and @(<$>)@.
-(>>=) ::
-  Bind f =>
-  f a
-  -> (a -> f b)
-  -> f b
-(>>=) =
-  error "todo"
+(>>=) :: Bind f => f a -> (a -> f b) -> f b
+(>>=) fa gafb = join (gafb <$> fa) 
 
+-- f (f a) -> f a
+-- (a -> b) -> f a -> f b
 infixl 1 >>=
 
 -- | Implement composition within the @Bind@ environment.
-(<=<) ::
-  Bind f =>
-  (b -> f c)
-  -> (a -> f b)
-  -> a
-  -> f c
-(<=<) =
-  error "todo"
+(<=<) :: Bind f => (b -> f c) -> (a -> f b) -> a -> f c
+(<=<) f g x = (g x) >>= f
 
 infixr 1 <=<
 

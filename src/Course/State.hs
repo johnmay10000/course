@@ -23,24 +23,28 @@ import qualified Data.Set as S
 -- >>> instance Arbitrary a => Arbitrary (List a) where arbitrary = P.fmap listh arbitrary
 
 -- A `State` is a function from a state value `s` to (a produced value `a`, and a resulting state `s`).
-newtype State s a =
-  State {
-    runState ::
-      s
-      -> (a, s)
-  }
+newtype State s a = State { runState :: s -> (a, s)}
+
+--
+-- newtype State s a = State s -> (a, s)
+-- runState :: State s a -> s -> (a, s)
+-- state :: (s -> (a, s)) -> State s a
 
 -- | Implement the `Functor` instance for `State s`.
 -- >>> runState ((+1) <$> pure 0) 0
 -- (1,0)
 instance Functor (State s) where
-  (<$>) =
-      error "todo"
+  --(<$>) = error "todo"
+  f <$> m =  State $ \st -> let (a, s) = runState m st in (f a, s)
+  -- (a -> b) -> (s->(a, s)) -> (s->(b, s))
 
 -- | Implement the `Apply` instance for `State s`.
 instance Apply (State s) where
-  (<*>) =
-    error "todo"
+  sf <*> sa = State $ \st -> let (f, st1) = runState sf st 
+                                 (a, st2) = runState sa st1
+                              in ((f a), st2)
+
+-- (State s)(a -> b) -> (State s) a -> (State s) b
 
 -- | Implement the `Applicative` instance for `State s`.
 instance Applicative (State s) where

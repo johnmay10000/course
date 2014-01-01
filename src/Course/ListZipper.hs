@@ -53,44 +53,35 @@ data MaybeListZipper a =
 -- >>> (+1) <$> (zipper [3,2,1] 4 [5,6,7])
 -- [4,3,2] >5< [6,7,8]
 instance Functor ListZipper where
-  (<$>) =
-    error "todo"
+  (<$>) f (ListZipper l x r) = ListZipper (f <$> l) (f x) (f <$> r)   
 
 -- | Implement the `Functor` instance for `MaybeListZipper`.
 --
 -- >>> (+1) <$> (IsZ (zipper [3,2,1] 4 [5,6,7]))
 -- [4,3,2] >5< [6,7,8]
 instance Functor MaybeListZipper where
-  (<$>) =
-    error "todo"
+  (<$>) _ IsNotZ = IsNotZ 
+  (<$>) f (IsZ lz) = IsZ (f <$> lz) 
 
 -- | Create a `MaybeListZipper` positioning the focus at the head.
 --
 -- prop> xs == toListZ (fromList xs)
-fromList ::
-  List a
-  -> MaybeListZipper a
-fromList =
-  error "todo"
+fromList :: List a -> MaybeListZipper a
+fromList Nil = IsNotZ 
+fromList (h:.t) = IsZ (ListZipper Nil h t)  
 
 -- | Retrieve the `ListZipper` from the `MaybeListZipper` if there is one.
 --
 -- prop> isEmpty xs == (toOptional (fromList xs) == Empty)
 --
 -- prop> toOptional (fromOptional z) == z
-toOptional ::
-  MaybeListZipper a
-  -> Optional (ListZipper a)
-toOptional =
-  error "todo"
+toOptional :: MaybeListZipper a -> Optional (ListZipper a)
+toOptional IsNotZ = Empty 
+toOptional (IsZ lz) = Full (lz) 
 
-fromOptional ::
-  Optional (ListZipper a)
-  -> MaybeListZipper a
-fromOptional Empty =
-  IsNotZ
-fromOptional (Full z) =
-  IsZ z
+fromOptional :: Optional (ListZipper a) -> MaybeListZipper a
+fromOptional Empty = IsNotZ
+fromOptional (Full z) = IsZ z
 
 asZipper ::
   (ListZipper a -> ListZipper a)
@@ -123,20 +114,13 @@ asMaybeZipper f (IsZ z) =
   asMaybeZipper
 
 -- | Convert the given zipper back to a list.
-toList ::
-  ListZipper a
-  -> List a
-toList =
-  error "todo"
+toList :: ListZipper a -> List a
+toList (ListZipper l x r) = reverse(l)++(x:.Nil)++r
 
 -- | Convert the given (maybe) zipper back to a list.
-toListZ ::
-  MaybeListZipper a
-  -> List a
-toListZ IsNotZ =
-  Nil
-toListZ (IsZ z) =
-  toList z
+toListZ :: MaybeListZipper a -> List a
+toListZ IsNotZ = Nil
+toListZ (IsZ z) = toList z
 
 -- | Update the focus of the zipper with the given function on the current focus.
 --
@@ -145,12 +129,8 @@ toListZ (IsZ z) =
 --
 -- >>> withFocus (+1) (zipper [1,0] 2 [3,4])
 -- [1,0] >3< [3,4]
-withFocus ::
-  (a -> a)
-  -> ListZipper a
-  -> ListZipper a
-withFocus =
-  error "todo"
+withFocus :: (a -> a) -> ListZipper a -> ListZipper a
+withFocus f (ListZipper l x r) = ListZipper l (f x) r 
 
 -- | Set the focus of the zipper to the given value.
 -- /Tip:/ Use `withFocus`.
@@ -160,12 +140,8 @@ withFocus =
 --
 -- >>> setFocus 1 (zipper [1,0] 2 [3,4])
 -- [1,0] >1< [3,4]
-setFocus ::
-  a
-  -> ListZipper a
-  -> ListZipper a
-setFocus =
-  error "todo"
+setFocus :: a -> ListZipper a -> ListZipper a
+setFocus y lz = withFocus (const y) lz   
 
 -- A flipped infix alias for `setFocus`. This allows:
 --
@@ -184,11 +160,9 @@ setFocus =
 --
 -- >>> hasLeft (zipper [] 0 [1,2])
 -- False
-hasLeft ::
-  ListZipper a
-  -> Bool
-hasLeft =
-  error "todo"
+hasLeft :: ListZipper a -> Bool
+hasLeft (ListZipper Nil _ _) = False
+hasLeft (ListZipper (_:._) _ _) = True
 
 -- | Returns whether there are values to the right of focus.
 --
@@ -197,11 +171,9 @@ hasLeft =
 --
 -- >>> hasRight (zipper [1,0] 2 [])
 -- False
-hasRight ::
-  ListZipper a
-  -> Bool
-hasRight =
-  error "todo"
+hasRight :: ListZipper a -> Bool
+hasRight (ListZipper _ _ Nil) = False
+hasRight (ListZipper _ _ (_:._)) = True
 
 -- | Seek to the left for a location matching a predicate, starting from the
 -- current one.
@@ -209,12 +181,11 @@ hasRight =
 -- prop> findLeft (const True) >-> fromList xs == fromList xs
 --
 -- prop> findLeft (const False) (zipper l x r) == IsNotZ
-findLeft ::
-  (a -> Bool)
-  -> ListZipper a
-  -> MaybeListZipper a
-findLeft =
-  error "todo"
+findLeft :: (a -> Bool) -> ListZipper a -> MaybeListZipper a
+findLeft f (ListZipper l x r) = 
+          case break f (x:.l) of
+              (m, (h':.t')) -> IsZ (ListZipper t' h' (reverse m ++ r) )
+              _ -> IsNotZ   
 
 -- | Seek to the right for a location matching a predicate, starting from the
 -- current one.

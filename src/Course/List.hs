@@ -248,8 +248,10 @@ find ::
   (a -> Bool)
   -> List a
   -> Optional a
-find =
-  error "todo"
+find _ Nil = Empty
+find f (h:.t) = if f h
+                then Full h
+                else find f t
 
 -- | Reverse a list.
 --
@@ -262,10 +264,20 @@ find =
 reverse ::
   List a
   -> List a
-reverse =
-  error "todo"
+reverse Nil = Nil
+reverse (h:.t) = reverse t ++ h:.Nil  
+reverse' ::
+  List a
+  -> List a
+reverse' Nil = Nil
+reverse' list = foldRight (\e acc -> acc ++ e :. Nil) Nil list 
 
--- | Do anything other than reverse a list.
+
+reverse'' ::
+  List a
+  -> List a
+reverse'' = foldLeft (\acc e -> e:.acc) Nil
+-- | Do anything other than reverse a list
 --
 -- >>> notReverse Nil
 -- []
