@@ -19,7 +19,10 @@ Functions --
 		(=<<) :: (a -> IO b) -> IO a -> IO b
 		pure :: a -> IO a
 -}
-
+main::IO()
+main = getArgs >>= \args -> case args of
+							[x]-> run x
+							Nil-> putStrLn "Usage : "
 -- Hint getArgs and run
 {- 
 
